@@ -159,11 +159,12 @@ button { color: inherit; }
 .inquiry-intro h2 { margin: 20px 0 0; font-family: var(--display); font-size: clamp(43px, 5.2vw, 67px); font-weight: 500; letter-spacing: -.065em; line-height: .98; }
 .inquiry-intro h2 span { color: var(--purple); }
 .inquiry-intro > p:not(.eyebrow) { max-width: 380px; margin: 20px 0 0; color: #77736d; font-size: 12px; line-height: 1.8; }
-.inquiry-whatsapp, .inquiry-linkedin { display: inline-flex; align-items: center; gap: 10px; font-size: 11px; }
+.inquiry-whatsapp, .inquiry-linkedin, .inquiry-github { display: inline-flex; align-items: center; gap: 10px; font-size: 11px; }
 .inquiry-whatsapp { margin-top: 24px; color: #287c4b; }
 .inquiry-linkedin { display: flex; width: fit-content; margin-top: 15px; color: #2566a4; }
-.inquiry-whatsapp svg:first-child, .inquiry-linkedin svg:first-child { width: 19px; height: 19px; }
-.inquiry-whatsapp svg:last-child, .inquiry-linkedin svg:last-child { width: 13px; height: 13px; }
+.inquiry-github { display: flex; width: fit-content; margin-top: 15px; color: var(--ink); }
+.inquiry-whatsapp svg:first-child, .inquiry-linkedin svg:first-child, .inquiry-github svg:first-child { width: 19px; height: 19px; }
+.inquiry-whatsapp svg:last-child, .inquiry-linkedin svg:last-child, .inquiry-github svg:last-child { width: 13px; height: 13px; }
 .inquiry-form { display: grid; gap: 18px; padding: 27px; background: #eeebe3; border: 1px solid #242323; box-shadow: 8px 9px 0 #f4ce41; }
 .form-field { display: grid; gap: 8px; }
 .form-field > span { font-family: var(--mono); font-size: 9px; letter-spacing: .45px; }
@@ -456,8 +457,8 @@ button { color: inherit; }
 }
 .inquiry-intro h2 { margin-top: 15px; }
 .inquiry-intro > p:not(.eyebrow) { font-size: 13px; }
-.inquiry-whatsapp, .inquiry-linkedin { transition: transform .2s ease, color .2s ease; }
-.inquiry-whatsapp:hover, .inquiry-linkedin:hover { transform: translateX(3px); }
+.inquiry-whatsapp, .inquiry-linkedin, .inquiry-github { transition: transform .2s ease, color .2s ease; }
+.inquiry-whatsapp:hover, .inquiry-linkedin:hover, .inquiry-github:hover { transform: translateX(3px); }
 .inquiry-form {
   gap: 17px;
   padding: 30px;

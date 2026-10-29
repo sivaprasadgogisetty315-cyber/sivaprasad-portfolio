@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion, useScroll } from "framer-motion";
+import emailjs from "@emailjs/browser";
 
 const fallbackProjects = [
   {
@@ -53,6 +54,10 @@ const whatsappUrl =
   "https://wa.me/919347351717?text=Hi%20Siva%2C%20I%27d%20like%20to%20discuss%20a%20project.";
 const linkedinUrl =
   "https://www.linkedin.com/in/siva-prasad-healthcare-non-it-staffing-consultant-react-js-developer/";
+const githubUrl = "https://github.com/sivaprasadgogisetty315-cyber";
+const emailjsServiceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const emailjsTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const emailjsPublicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 const services = [
   {
@@ -156,6 +161,14 @@ function LinkedInIcon() {
   );
 }
 
+function GitHubIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 .9a11.1 11.1 0 0 0-3.5 21.6c.6.1.8-.2.8-.6v-2.1c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.5 2.4 3.8 1.7.1-.8.5-1.4.9-1.7-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.5.4.9 1.1.9 2.1v3.1c0 .4.2.7.8.6A11.1 11.1 0 0 0 12 .9Z" />
+    </svg>
+  );
+}
+
 function CartoonBuddy() {
   return (
     <svg viewBox="0 0 220 230" role="img" aria-label="A cheerful illustrated creative sidekick">
@@ -236,6 +249,7 @@ function App() {
   const [buddyWaving, setBuddyWaving] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [sliderAtEnd, setSliderAtEnd] = useState(false);
+  const formSubmissionRef = useRef(false);
   const projectTrackRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
@@ -260,6 +274,8 @@ function App() {
   };
 
   useEffect(() => {
+    if (import.meta.env.VITE_PORTFOLIO_API_ENABLED === "false") return;
+
     const controller = new AbortController();
     fetch("/api/portfolio", { signal: controller.signal })
       .then((response) => {
@@ -292,37 +308,50 @@ function App() {
 
   const handleContactSubmit = async (event) => {
     event.preventDefault();
+    if (formSubmissionRef.current) return;
+
     const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+
     const formData = new FormData(form);
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const service = String(formData.get("service") ?? "").trim();
+    const message = String(formData.get("message") ?? "").trim();
+    if (!name || !email || !service || !message) {
+      setShowEmailFallback(true);
+      setFormStatus("Please complete each field before sending your inquiry.");
+      return;
+    }
+
+    if (!emailjsServiceId || !emailjsTemplateId || !emailjsPublicKey) {
+      setShowEmailFallback(true);
+      setFormStatus("The contact form is not configured yet. Please email directly.");
+      return;
+    }
+
+    formSubmissionRef.current = true;
     setFormSending(true);
     setShowEmailFallback(false);
     setFormStatus("Sending your inquiry...");
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.get("name"),
-          email: formData.get("email"),
-          service: formData.get("service"),
-          details: formData.get("details"),
-        }),
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Your inquiry could not be sent.");
-      }
+      await emailjs.send(
+        emailjsServiceId,
+        emailjsTemplateId,
+        { name, email, reply_to: email, service, message },
+        { publicKey: emailjsPublicKey },
+      );
 
       form.reset();
       setSelectedService("");
-      setFormStatus("Thanks! Your inquiry was sent to Siva's Gmail.");
+      setFormStatus("Thanks! Your inquiry was sent successfully.");
     } catch (error) {
       console.error("Could not submit contact inquiry:", error);
-      setFormStatus(error.message || "Your inquiry could not be sent. Please email directly.");
+      setFormStatus("We couldn't send your inquiry. Please try again or email directly.");
       setShowEmailFallback(true);
     } finally {
+      formSubmissionRef.current = false;
       setFormSending(false);
     }
   };
@@ -597,6 +626,11 @@ function App() {
                 <span>LINKEDIN</span>
                 <ArrowIcon diagonal />
               </a>
+              <a className="contact-social-link" href={githubUrl} target="_blank" rel="noreferrer" aria-label="Visit Siva on GitHub">
+                <GitHubIcon />
+                <span>GITHUB</span>
+                <ArrowIcon diagonal />
+              </a>
               <a className="contact-social-link" href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="Message Siva on WhatsApp">
                 <WhatsAppIcon />
                 <span>WHATSAPP</span>
@@ -616,6 +650,9 @@ function App() {
               </a>
               <a className="inquiry-linkedin" href={linkedinUrl} target="_blank" rel="noreferrer" aria-label="Visit Siva on LinkedIn">
                 <LinkedInIcon /><span>Find me on LinkedIn</span><ArrowIcon diagonal />
+              </a>
+              <a className="inquiry-github" href={githubUrl} target="_blank" rel="noreferrer" aria-label="Visit Siva on GitHub">
+                <GitHubIcon /><span>Find me on GitHub</span><ArrowIcon diagonal />
               </a>
             </div>
             <motion.form className="inquiry-form" onSubmit={handleContactSubmit} initial={reduceMotion ? false : { opacity: 0, x: 18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: reduceMotion ? 0 : 0.55, delay: reduceMotion ? 0 : 0.12 }}>
@@ -644,7 +681,7 @@ function App() {
               </label>
               <label className="form-field">
                 <span>Tell me about your project</span>
-                <textarea name="details" rows="4" placeholder="What are you looking to create?" required />
+                <textarea name="message" rows="4" placeholder="What are you looking to create?" required />
               </label>
               <button className="form-submit" type="submit" disabled={formSending}>
                 {formSending ? "Sending your inquiry..." : "Send inquiry"}
