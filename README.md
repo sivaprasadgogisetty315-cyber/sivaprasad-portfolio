@@ -30,8 +30,10 @@ Copy-Item .env.example .env
 Set `VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID`, and
 `VITE_EMAILJS_PUBLIC_KEY` to the values from your EmailJS account. In the
 EmailJS template, set the recipient to `sivaprasadgogisetty315@gmail.com` and
-use these template variables: `{{name}}`, `{{email}}`, `{{service}}`, and
-`{{message}}`. Set Reply-To to `{{reply_to}}` so you can reply to the visitor.
+use these template variables: `{{name}}`, `{{email}}`, `{{service}}`,
+`{{message}}`, and `{{reply_to}}`. The browser sends the visitor's email as
+`reply_to`, enabling the EmailJS template to set Reply-To so you can reply to
+the inquiry.
 
 The form sends name, email, service, and project details as `message`; it has
 no phone field. Required fields and email format are validated in the browser.
@@ -42,7 +44,8 @@ put your Gmail password, an EmailJS private key, or other server secrets in a
 `VITE_` variable. Restrict the EmailJS service to your website domain and
 configure the recipient in the EmailJS template.
 
-Open the Vite URL printed in the terminal. The development server proxies `/api` requests to Express on port 3001.
+Open the Vite URL printed in the terminal. The development server proxies `/api`
+requests to Express on port 3001.
 
 ## Deploy a static site to Hostinger
 
