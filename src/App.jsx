@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion, useScroll } from "framer-motion";
-import emailjs from "@emailjs/browser";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 
 const fallbackProjects = [
   {
@@ -55,9 +61,7 @@ const whatsappUrl =
 const linkedinUrl =
   "https://www.linkedin.com/in/siva-prasad-healthcare-non-it-staffing-consultant-react-js-developer/";
 const githubUrl = "https://github.com/sivaprasadgogisetty315-cyber";
-const emailjsServiceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const emailjsTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-const emailjsPublicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+const gmarkUrl = "https://gmark.agency";
 
 const services = [
   {
@@ -169,27 +173,6 @@ function GitHubIcon() {
   );
 }
 
-function CartoonBuddy() {
-  return (
-    <svg viewBox="0 0 220 230" role="img" aria-label="A cheerful illustrated creative sidekick">
-      <ellipse cx="113" cy="216" rx="66" ry="9" fill="#2423231a" />
-      <path d="M56 133c-8 26-11 48-5 67 5 17 26 20 60 20 40 0 62-8 65-27 4-22-9-53-20-72Z" fill="#7653f6" stroke="#242323" strokeWidth="4" />
-      <path d="M64 161c-18 7-25 16-28 29-2 8 3 13 10 11l28-16m93-18c15 7 23 16 24 28 1 7-4 12-10 9l-25-15" fill="#ffd7ad" stroke="#242323" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M85 155c2 15 12 23 27 23 17 0 27-9 29-24" fill="none" stroke="#f4d334" strokeWidth="6" strokeLinecap="round" />
-      <path d="M45 77c0-31 27-55 67-55 39 0 68 23 68 58 0 35-26 67-67 67-42 0-68-31-68-70Z" fill="#ffb38f" stroke="#242323" strokeWidth="4" />
-      <path d="M47 72C47 35 73 14 112 14c28 0 51 12 63 34-18-9-31-9-45-3-18 8-34 7-50 2-1 14-13 25-33 25Z" fill="#242323" stroke="#242323" strokeWidth="4" strokeLinejoin="round" />
-      <path d="M66 74c10-9 22-10 32-2m24 0c10-8 22-7 32 2" fill="none" stroke="#242323" strokeWidth="4" strokeLinecap="round" />
-      <ellipse cx="83" cy="91" rx="4" ry="6" fill="#242323" />
-      <ellipse cx="137" cy="91" rx="4" ry="6" fill="#242323" />
-      <path d="M91 111c12 13 27 13 39 0" fill="none" stroke="#242323" strokeWidth="4" strokeLinecap="round" />
-      <circle cx="66" cy="107" r="8" fill="#f26a4570" />
-      <circle cx="153" cy="107" r="8" fill="#f26a4570" />
-      <path d="m178 39 6 13 14 2-10 9 2 14-12-7-12 7 3-14-10-9 14-2Z" fill="#f4d334" stroke="#242323" strokeWidth="3" strokeLinejoin="round" />
-      <path d="m40 128 4 8 9 1-7 6 2 9-8-4-7 4 1-9-6-6 9-1Z" fill="#f4d334" stroke="#242323" strokeWidth="2" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function ProjectArtwork({ type }) {
   if (type === "web") {
     return (
@@ -240,19 +223,26 @@ function App() {
   const [portfolio, setPortfolio] = useState(initialPortfolio);
   const [apiError, setApiError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [formStatus, setFormStatus] = useState("");
-  const [formSending, setFormSending] = useState(false);
-  const [showEmailFallback, setShowEmailFallback] = useState(false);
-  const [selectedService, setSelectedService] = useState("");
   const [projectFilter, setProjectFilter] = useState("All");
   const [emailCopied, setEmailCopied] = useState(false);
-  const [buddyWaving, setBuddyWaving] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
   const [activeSlide, setActiveSlide] = useState(0);
   const [sliderAtEnd, setSliderAtEnd] = useState(false);
-  const formSubmissionRef = useRef(false);
   const projectTrackRef = useRef(null);
+  const menuToggleRef = useRef(null);
+  const heroRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const pointerX = useSpring(useMotionValue(0), { stiffness: 120, damping: 22 });
+  const pointerY = useSpring(useMotionValue(0), { stiffness: 120, damping: 22 });
+  const heroArtY = useTransform(heroScrollProgress, [0, 1], [0, 54]);
+  const heroArtScale = useTransform(heroScrollProgress, [0, 1], [1, 0.94]);
+  const heroArtXRotation = useTransform(pointerY, [-0.5, 0.5], [5, -5]);
+  const heroArtYRotation = useTransform(pointerX, [-0.5, 0.5], [-6, 6]);
   const visibleProjects = portfolio.projects.filter((project) => {
     if (projectFilter === "All") return true;
     if (projectFilter === "Web") return project.category.includes("WEB");
@@ -274,7 +264,8 @@ function App() {
   };
 
   useEffect(() => {
-    if (import.meta.env.VITE_PORTFOLIO_API_ENABLED === "false") return;
+    const apiEnabled = import.meta.env.VITE_PORTFOLIO_API_ENABLED;
+    if (apiEnabled === "false" || (import.meta.env.PROD && apiEnabled !== "true")) return;
 
     const controller = new AbortController();
     fetch("/api/portfolio", { signal: controller.signal })
@@ -293,72 +284,50 @@ function App() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const handleMenuKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleMenuKeyDown);
+    return () => window.removeEventListener("keydown", handleMenuKeyDown);
+  }, [menuOpen]);
+
   const closeMenu = () => setMenuOpen(false);
+
+  const handleHeroPointerMove = (event) => {
+    if (reduceMotion || event.pointerType !== "mouse") return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    pointerX.set((event.clientX - bounds.left) / bounds.width - 0.5);
+    pointerY.set((event.clientY - bounds.top) / bounds.height - 0.5);
+  };
+
+  const resetHeroPointer = () => {
+    pointerX.set(0);
+    pointerY.set(0);
+  };
 
   const handleCopyEmail = async () => {
     try {
       await navigator.clipboard.writeText(portfolio.email);
       setEmailCopied(true);
+      setCopyStatus("Email address copied to clipboard.");
       window.setTimeout(() => setEmailCopied(false), 2200);
     } catch (error) {
       console.error("Could not copy email address:", error);
-      setFormStatus("Could not copy the email address. Please use the contact form below.");
-    }
-  };
-
-  const handleContactSubmit = async (event) => {
-    event.preventDefault();
-    if (formSubmissionRef.current) return;
-
-    const form = event.currentTarget;
-    if (!form.reportValidity()) return;
-
-    const formData = new FormData(form);
-    const name = String(formData.get("name") ?? "").trim();
-    const email = String(formData.get("email") ?? "").trim();
-    const service = String(formData.get("service") ?? "").trim();
-    const message = String(formData.get("message") ?? "").trim();
-    if (!name || !email || !service || !message) {
-      setShowEmailFallback(true);
-      setFormStatus("Please complete each field before sending your inquiry.");
-      return;
-    }
-
-    if (!emailjsServiceId || !emailjsTemplateId || !emailjsPublicKey) {
-      setShowEmailFallback(true);
-      setFormStatus("The contact form is not configured yet. Please email directly.");
-      return;
-    }
-
-    formSubmissionRef.current = true;
-    setFormSending(true);
-    setShowEmailFallback(false);
-    setFormStatus("Sending your inquiry...");
-
-    try {
-      await emailjs.send(
-        emailjsServiceId,
-        emailjsTemplateId,
-        { name, email, reply_to: email, service, message },
-        { publicKey: emailjsPublicKey },
-      );
-
-      form.reset();
-      setSelectedService("");
-      setFormStatus("Thanks! Your inquiry was sent successfully.");
-    } catch (error) {
-      console.error("Could not submit contact inquiry:", error);
-      setFormStatus("We couldn't send your inquiry. Please try again or email directly.");
-      setShowEmailFallback(true);
-    } finally {
-      formSubmissionRef.current = false;
-      setFormSending(false);
+      setCopyStatus("Could not copy automatically. You can select the email address above.");
     }
   };
 
   return (
     <>
       <div className="site-shell">
+        <a className="skip-link" href="#main-content">Skip to content</a>
         <motion.div
           className="scroll-progress"
           style={{ scaleX: scrollYProgress }}
@@ -369,15 +338,18 @@ function App() {
             G<span>S</span>PD
           </a>
           <button
+            ref={menuToggleRef}
             className={`menu-toggle${menuOpen ? " is-open" : ""}`}
             type="button"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
+            aria-controls="main-navigation"
             onClick={() => setMenuOpen((isOpen) => !isOpen)}
           >
             <span /><span />
           </button>
           <motion.nav
+            id="main-navigation"
             className={`main-nav${menuOpen ? " nav-open" : ""}`}
             aria-label="Main navigation"
             initial={reduceMotion ? false : { opacity: 0, y: -8 }}
@@ -387,25 +359,40 @@ function App() {
                 <a href="#services" onClick={closeMenu}>Services</a>
                 <a href="#work" onClick={closeMenu}>Selected work <span>03</span></a>
                 <a href="#about" onClick={closeMenu}>A little about me</a>
-                <a className="nav-contact" href={`mailto:${portfolio.email}`}>
-                  Say hello <ArrowIcon diagonal />
+                <a href="#faq" onClick={closeMenu}>FAQ</a>
+                <a className="nav-contact" href={gmarkUrl} target="_blank" rel="noreferrer">
+                  Gmark.agency <ArrowIcon diagonal />
                 </a>
           </motion.nav>
         </header>
 
         {apiError && <p className="api-notice" role="status">{apiError}</p>}
 
-        <main>
-          <section className="hero" id="home">
+        <main id="main-content" tabIndex={-1}>
+          <section className="hero cinematic-hero" id="home" ref={heroRef}>
             <div className="hero-copy">
-              <p className="eyebrow"><span className="status-dot" /> GSPD CREATIVE STUDIO <span className="eyebrow-divider">/</span> AVAILABLE FOR PROJECTS</p>
-              <h1>Hey, I’m<br /><span className="name-highlight">{portfolio.firstName}<span className="name-period">.</span></span></h1>
+              <motion.p
+                className="eyebrow"
+                initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.6 }}
+              >
+                <span className="status-dot" /> SIVA PRASAD GOGISETTY <span className="eyebrow-divider">/</span> INDEPENDENT CREATIVE
+              </motion.p>
+              <motion.h1
+                className="cinematic-title"
+                initial={reduceMotion ? false : { opacity: 0, y: 30, filter: "blur(12px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: reduceMotion ? 0 : 0.9, delay: reduceMotion ? 0 : 0.12, ease: [0.22, 1, 0.36, 1] }}
+              >
+                Made to<br /><span className="name-highlight">move<span className="name-period">.</span></span>
+              </motion.h1>
               <div className="hero-bottom">
                 <p className="hero-role">{portfolio.role}<span className="role-star">✳</span></p>
                 <p className="hero-intro">{portfolio.introduction}</p>
               </div>
               <div className="hero-actions">
-                <a className="hero-primary-action" href="#contact-form">Start a project <ArrowIcon diagonal /></a>
+                <a className="hero-primary-action" href={gmarkUrl} target="_blank" rel="noreferrer">Start a project <ArrowIcon diagonal /></a>
                 <a className="hero-secondary-action" href="#work">Explore my work <ArrowIcon /></a>
               </div>
               <div className="hero-service-tags" aria-label="Services">
@@ -414,41 +401,43 @@ function App() {
               <span className="hero-side-note">SCROLL A LITTLE <span>↓</span></span>
             </div>
 
-            <div className="hero-art" aria-label="Colorful abstract creator illustration">
+            <motion.div
+              className="hero-art cinematic-art"
+              role="img"
+              aria-label="Abstract cinematic artwork for GSPD Creative Studio"
+              onPointerMove={handleHeroPointerMove}
+              onPointerLeave={resetHeroPointer}
+              style={{
+                rotateX: reduceMotion ? 0 : heroArtXRotation,
+                rotateY: reduceMotion ? 0 : heroArtYRotation,
+                y: reduceMotion ? 0 : heroArtY,
+                scale: reduceMotion ? 1 : heroArtScale,
+                transformPerspective: 1100,
+              }}
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reduceMotion ? 0 : 1.1, delay: reduceMotion ? 0 : 0.18, ease: [0.22, 1, 0.36, 1] }}
+            >
               <div className="hero-art-grid" />
               <div className="hero-orbit orbit-one" />
               <div className="hero-orbit orbit-two" />
-              <div className="hero-flower">✳</div>
-              <div className="hero-smiley">☺</div>
-              <div className="hero-scribble">ideas<br />in motion<span>↗</span></div>
-              <div className="hero-sticker">MAKING<br />GOOD<br />THINGS</div>
-              <div className="hero-glass-card">
-                <span className="glass-card-top"><span className="status-dot" /> GSPD CREATIVE STUDIO</span>
-                <span className="glass-card-title">Digital things,<br />with a little <i>magic.</i></span>
-                <span className="glass-card-footer"><i>01</i><i>WEB / VIDEO</i><i>↗</i></span>
-              </div>
-              <motion.button
-                type="button"
-                className={`hero-mascot${buddyWaving ? " is-waving" : ""}`}
-                aria-label={buddyWaving ? "Say hello to the creative sidekick" : "Wave hello to the creative sidekick"}
-                aria-pressed={buddyWaving}
-                onClick={() => setBuddyWaving((isWaving) => !isWaving)}
-                whileHover={reduceMotion ? undefined : { scale: 1.07, rotate: -3 }}
-                whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-              >
-                <CartoonBuddy />
-              </motion.button>
-              <motion.span
-                className="buddy-speech"
-                initial={false}
-                animate={{ opacity: buddyWaving ? 1 : 0, y: buddyWaving ? 0 : 6, scale: buddyWaving ? 1 : 0.96 }}
+              <div className="cinema-sun" aria-hidden="true" />
+              <div
+                className="pointer-events-none absolute left-6 top-6 z-[5] font-mono text-[8px] uppercase tracking-[.2em] text-stone-200 max-[620px]:left-4 max-[620px]:top-[19px]"
                 aria-hidden="true"
               >
-                {buddyWaving ? "Hey, nice to meet you!" : ""}
-              </motion.span>
-              <span className="hero-floating-label">✳ STORY FIRST</span>
-              <div className="hero-art-caption">WEB × VIDEO × IMAGINATION</div>
-            </div>
+                A STUDY IN <span className="text-portfolio-accent">—</span> FEELING
+              </div>
+              <div className="hero-glass-card">
+                <span className="glass-card-top"><span className="status-dot" /> THE GSPD PRACTICE</span>
+                <span className="glass-card-title">Digital work,<br /><i>made human.</i></span>
+                <span className="glass-card-footer"><i>THOUGHTFUL BY DESIGN</i><i>WEB / FILM</i><i>↗</i></span>
+              </div>
+              <span className="hero-floating-label">SEQUENCE 01 <i>·</i> STORY FIRST</span>
+              <div className="absolute bottom-[17px] left-0 right-0 z-[2] text-center font-mono text-[8px] tracking-[1.7px] text-[#ded4c8]">
+                WEB <i className="text-portfolio-accent">×</i> FILM <i className="text-portfolio-accent">×</i> IMAGINATION
+              </div>
+            </motion.div>
             <span className="hero-index">INDEPENDENT CREATIVE / 2026</span>
           </section>
 
@@ -466,15 +455,16 @@ function App() {
                 <p className="eyebrow">GOOD IDEAS, MEET GOOD EXECUTION</p>
                 <h2>Ways we can <span>work together.</span></h2>
               </div>
-              <a className="services-all-link" href="#contact-form">Have a project in mind? <ArrowIcon diagonal /></a>
+              <a className="services-all-link" href={gmarkUrl} target="_blank" rel="noreferrer">Have a project in mind? <ArrowIcon diagonal /></a>
             </div>
             <div className="services-grid">
               {services.map((service) => (
                 <motion.a
                   className={`service-card service-${service.tone}`}
-                  href="#contact-form"
+                  href={gmarkUrl}
+                  target="_blank"
+                  rel="noreferrer"
                   key={service.number}
-                  onClick={() => setSelectedService(service.title === "Website" ? "Website development" : service.title)}
                   whileHover={reduceMotion ? undefined : { y: -7, scale: 1.015 }}
                   whileTap={reduceMotion ? undefined : { scale: 0.985 }}
                   initial={reduceMotion ? false : { opacity: 0, y: 22 }}
@@ -490,7 +480,7 @@ function App() {
                       {service.platforms.map((platform) => <i key={platform}>{platform}</i>)}
                     </span>
                   )}
-                  <span className="service-card-bottom">EXPLORE SERVICE <ArrowIcon /></span>
+                  <span className="service-card-bottom">VISIT GMARK.AGENCY <ArrowIcon /></span>
                 </motion.a>
               ))}
             </div>
@@ -507,10 +497,10 @@ function App() {
           <motion.section className="work-section section-pad reveal-on-scroll" id="work" initial={reduceMotion ? false : { opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: reduceMotion ? 0 : 0.65 }}>
             <div className="section-heading">
               <div>
-                <p className="eyebrow">A FEW THINGS I’M INTO</p>
+                <p className="eyebrow">SELECTED EXPERIMENTS / CONCEPTS</p>
                 <h2>Selected <span>work</span><sup>03</sup></h2>
               </div>
-              <p className="section-aside">A mix of screens, stories<br />&amp; happy little experiments.</p>
+              <p className="section-aside">Concept-led work in progress.<br />More real-world projects soon.</p>
             </div>
 
             <div className="project-toolbar">
@@ -547,13 +537,16 @@ function App() {
             <div
               className="project-grid project-track"
               ref={projectTrackRef}
+              role="region"
+              aria-roledescription="carousel"
+              aria-label="Selected work"
               onScroll={(event) => {
                 const track = event.currentTarget;
                 const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
-                setSliderAtEnd(atEnd);
+                setSliderAtEnd((previous) => previous === atEnd ? previous : atEnd);
                 const firstCard = track.querySelector(".project-card");
                 if (!firstCard) {
-                  setActiveSlide(0);
+                  setActiveSlide((previous) => previous === 0 ? previous : 0);
                   return;
                 }
                 const styles = window.getComputedStyle(track);
@@ -561,14 +554,34 @@ function App() {
                 const currentSlide = atEnd
                   ? visibleProjects.length - 1
                   : Math.round(track.scrollLeft / (firstCard.getBoundingClientRect().width + gap));
-                setActiveSlide(Math.max(0, currentSlide));
+                const nextSlide = Math.max(0, currentSlide);
+                setActiveSlide((previous) => previous === nextSlide ? previous : nextSlide);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowRight") {
+                  event.preventDefault();
+                  moveProjectSlider("next");
+                } else if (event.key === "ArrowLeft") {
+                  event.preventDefault();
+                  moveProjectSlider("previous");
+                }
               }}
               tabIndex={0}
-              aria-label="Selected work carousel. Scroll horizontally or use the previous and next buttons."
             >
-              {visibleProjects.map((project) => (
-                <motion.article className={`project-card project-${project.color}`} key={project.number} layout initial={reduceMotion ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: reduceMotion ? 0 : 0.35 }}>
-                  <a className="project-link" href={`mailto:${portfolio.email}?subject=${encodeURIComponent(`Tell me about ${project.title}`)}`} aria-label={`Ask Siva about ${project.title}`}>
+              {visibleProjects.map((project, index) => (
+                <motion.article
+                  className={`project-card project-${project.color}`}
+                  key={project.number}
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`${index + 1} of ${visibleProjects.length}: ${project.title}`}
+                  layout
+                  initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.12 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.35 }}
+                >
+                  <a className="project-link" href={gmarkUrl} target="_blank" rel="noreferrer" aria-label={`Visit Gmark.agency to learn more about ${project.title}`}>
                     <ProjectArtwork type={project.visual} />
                     <div className="project-meta">
                       <div>
@@ -582,7 +595,7 @@ function App() {
                 </motion.article>
               ))}
             </div>
-            <p className="work-footnote"><span>✳</span> These are creative directions and personal work in progress. More soon!</p>
+            <p className="work-footnote"><span>✳</span> Independent concepts and personal experiments — not client case studies.</p>
           </motion.section>
 
           <motion.section className="about-section section-pad reveal-on-scroll" id="about" initial={reduceMotion ? false : { opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: reduceMotion ? 0 : 0.7 }}>
@@ -591,7 +604,7 @@ function App() {
               <h2>Two worlds.<br />One curious <span>mind.</span></h2>
               <p className="about-copy">I’m {portfolio.name} — an AI web developer and video editor who loves finding the sweet spot between useful and unforgettable.</p>
               <p className="about-copy about-copy-small">From the first sketch to the final frame, I’m here to make things that feel thoughtful, work beautifully, and stick with you.</p>
-              <a className="text-link" href={`mailto:${portfolio.email}`}>Let’s make something <ArrowIcon diagonal /></a>
+              <a className="text-link" href={gmarkUrl} target="_blank" rel="noreferrer">Let’s make something <ArrowIcon diagonal /></a>
             </div>
 
             <div className="skills-board">
@@ -609,17 +622,55 @@ function App() {
             </div>
           </motion.section>
 
+          <motion.section
+            className="faq-section section-pad reveal-on-scroll"
+            id="faq"
+            aria-labelledby="faq-heading"
+            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.55 }}
+          >
+            <div className="faq-intro">
+              <p className="eyebrow">A FEW QUICK ANSWERS</p>
+              <h2 id="faq-heading">Good to know<br />before we <span>begin.</span></h2>
+              <p>Have another question? Visit Gmark.agency to get in touch.</p>
+              <a className="text-link" href={gmarkUrl} target="_blank" rel="noreferrer">Visit Gmark.agency <ArrowIcon diagonal /></a>
+            </div>
+            <div className="faq-list">
+              <details className="faq-item" name="portfolio-faq">
+                <summary>What can I reach out about?<span aria-hidden="true" /></summary>
+                <div className="faq-answer">
+                  <p>Website development, video editing or shoots, product photography, social campaigns, paid ads, or a combination of services.</p>
+                </div>
+              </details>
+              <details className="faq-item" name="portfolio-faq">
+                <summary>Where should I go to get in touch?<span aria-hidden="true" /></summary>
+                <div className="faq-answer">
+                  <p>Visit <a href={gmarkUrl} target="_blank" rel="noreferrer">Gmark.agency</a> for project inquiries and collaborations.</p>
+                </div>
+              </details>
+              <details className="faq-item" name="portfolio-faq">
+                <summary>How do we get started?<span aria-hidden="true" /></summary>
+                <div className="faq-answer">
+                  <p>Choose the service you have in mind, then connect with me through Gmark.agency, WhatsApp, or email.</p>
+                </div>
+              </details>
+            </div>
+          </motion.section>
+
           <motion.section className="contact-section reveal-on-scroll" id="contact" initial={reduceMotion ? false : { opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.14 }} transition={{ duration: reduceMotion ? 0 : 0.7 }}>
             <div className="contact-star" aria-hidden="true">✳</div>
             <p className="eyebrow">HAVE A GOOD ONE IN MIND?</p>
             <h2>Let’s make<br />it <span>happen.</span></h2>
-            <a className="contact-button" href="#contact-form">
-              Drop me a line <ArrowIcon diagonal />
+            <a className="contact-button" href={gmarkUrl} target="_blank" rel="noreferrer">
+              Visit Gmark.agency <ArrowIcon diagonal />
             </a>
             <button className="contact-email-copy" type="button" onClick={handleCopyEmail} aria-live="polite">
               <span>{emailCopied ? "Email copied!" : portfolio.email}</span>
               <span className="copy-action">{emailCopied ? "COPIED" : "COPY EMAIL"}</span>
             </button>
+            <p className="contact-copy-status" role="status">{copyStatus}</p>
             <div className="contact-socials">
               <a className="contact-social-link" href={linkedinUrl} target="_blank" rel="noreferrer" aria-label="Visit Siva on LinkedIn">
                 <LinkedInIcon />
@@ -640,61 +691,6 @@ function App() {
             <div className="contact-doodle" aria-hidden="true">↗</div>
           </motion.section>
 
-          <motion.section className="inquiry-section section-pad reveal-on-scroll" id="contact-form" initial={reduceMotion ? false : { opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: reduceMotion ? 0 : 0.65 }}>
-            <div className="inquiry-intro">
-              <p className="eyebrow">TELL ME A LITTLE ABOUT IT</p>
-              <h2>What are we<br />making <span>together?</span></h2>
-              <p>Pick a service, share a few details, and your inquiry will be sent directly to my Gmail.</p>
-              <a className="inquiry-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer">
-                <WhatsAppIcon /> Prefer WhatsApp? Let’s chat <ArrowIcon diagonal />
-              </a>
-              <a className="inquiry-linkedin" href={linkedinUrl} target="_blank" rel="noreferrer" aria-label="Visit Siva on LinkedIn">
-                <LinkedInIcon /><span>Find me on LinkedIn</span><ArrowIcon diagonal />
-              </a>
-              <a className="inquiry-github" href={githubUrl} target="_blank" rel="noreferrer" aria-label="Visit Siva on GitHub">
-                <GitHubIcon /><span>Find me on GitHub</span><ArrowIcon diagonal />
-              </a>
-            </div>
-            <motion.form className="inquiry-form" onSubmit={handleContactSubmit} initial={reduceMotion ? false : { opacity: 0, x: 18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: reduceMotion ? 0 : 0.55, delay: reduceMotion ? 0 : 0.12 }}>
-              <label className="form-field">
-                <span>Your name</span>
-                <input type="text" name="name" autoComplete="name" placeholder="How should I address you?" required />
-              </label>
-              <label className="form-field">
-                <span>Email address</span>
-                <input type="email" name="email" autoComplete="email" placeholder="you@example.com" required />
-              </label>
-              <label className="form-field">
-                <span>What can I help with?</span>
-                <select name="service" value={selectedService} onChange={(event) => setSelectedService(event.target.value)} required>
-                  <option value="" disabled>Select a service</option>
-                  <option value="Video editing">Video editing</option>
-                  <option value="Video shoot">Video shoot</option>
-                  <option value="Product shoot">Product shoot</option>
-                  <option value="Website development">Website development</option>
-                  <option value="Social media campaigns">Social media campaigns</option>
-                  <option value="Facebook & Instagram ads">Facebook & Instagram ads</option>
-                  <option value="Google Ads">Google Ads</option>
-                  <option value="Multiple services">A combination of services</option>
-                  <option value="Other project">Something else</option>
-                </select>
-              </label>
-              <label className="form-field">
-                <span>Tell me about your project</span>
-                <textarea name="message" rows="4" placeholder="What are you looking to create?" required />
-              </label>
-              <button className="form-submit" type="submit" disabled={formSending}>
-                {formSending ? "Sending your inquiry..." : "Send inquiry"}
-                {!formSending && <ArrowIcon diagonal />}
-              </button>
-              <p className={`form-status${showEmailFallback ? " is-error" : ""}`} role="status">{formStatus}</p>
-              {showEmailFallback && (
-                <a className="form-email-fallback" href={`mailto:${portfolio.email}`}>
-                  Email me directly at {portfolio.email}
-                </a>
-              )}
-            </motion.form>
-          </motion.section>
         </main>
 
         <footer className="site-footer">

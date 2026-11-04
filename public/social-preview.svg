@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">GSPD Creative Studio</title>
+  <desc id="description">Siva Prasad Gogisetty, AI web developer and video editor. Websites, video, and visual stories.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8f5ee"/>
+      <stop offset=".55" stop-color="#eee6d9"/>
+      <stop offset="1" stop-color="#e7d8c8"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a5533d"/>
+      <stop offset="1" stop-color="#c17e5a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <circle cx="1020" cy="170" r="220" fill="#d7c5ad" opacity=".55"/>
+  <circle cx="1100" cy="530" r="210" fill="#e2c7af" opacity=".5"/>
+  <rect x="68" y="58" width="1064" height="514" rx="38" fill="#ffffff" opacity=".72"/>
+  <rect x="106" y="96" width="152" height="58" rx="4" fill="#faf7f0" stroke="#d9d2c7" stroke-width="2"/>
+  <text x="132" y="135" fill="#352a25" font-family="Georgia, 'Times New Roman', serif" font-size="31" font-weight="800" letter-spacing="-2">GSPD</text>
+  <circle cx="1000" cy="160" r="88" fill="#d6a17d"/>
+  <path d="M1000 48c18 54 28 75 82 112-54 18-75 28-112 82-18-54-28-75-82-112 54-18 75-28 112-82Z" fill="#a5533d" opacity=".88"/>
+  <circle cx="1000" cy="160" r="29" fill="#f5e5ca"/>
+  <text x="108" y="256" fill="#98614f" font-family="ui-monospace, SFMono-Regular, monospace" font-size="17" font-weight="600" letter-spacing="3">INDEPENDENT CREATIVE</text>
+  <text x="102" y="370" fill="#29231f" font-family="Georgia, 'Times New Roman', serif" font-size="92" font-weight="750" letter-spacing="-6">Siva Prasad</text>
+  <text x="102" y="464" fill="url(#accent)" font-family="Georgia, 'Times New Roman', serif" font-size="92" font-weight="750" letter-spacing="-6">Gogisetty.</text>
+  <text x="110" y="526" fill="#6d6258" font-family="system-ui, -apple-system, sans-serif" font-size="25" font-weight="500">Digital, with feeling  /  web  /  film</text>
+</svg>
